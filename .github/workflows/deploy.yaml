@@ -34,4 +34,4 @@ jobs:
           --stack-name ec2-website-stack \
           --query "Stacks[0].Outputs[?OutputKey=='WebsiteURL'].OutputValue" \
           --output text)
-        echo "🌐 Sitio disponible en: $URL"
+        echo "Sitio disponible en: $URL"
