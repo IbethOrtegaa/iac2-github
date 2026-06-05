@@ -1,0 +1,132 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: EC2 con sitio web personal desde GitHub Actions
+
+Resources:
+
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Permite HTTP y SSH
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+  MyEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-east-1a
+      ImageId: ami-0cca150d127c2216f
+      InstanceType: t3.micro
+      SecurityGroups:
+        - !Ref WebSecurityGroup
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          cat <<'EOF' > /var/www/html/index.html
+          <!DOCTYPE html>
+          <html lang="es">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Mi Sitio Personal</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body {
+                font-family: 'Segoe UI', sans-serif;
+                background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+              }
+              .card {
+                background: rgba(255,255,255,0.1);
+                backdrop-filter: blur(10px);
+                border-radius: 20px;
+                padding: 60px 80px;
+                text-align: center;
+                border: 1px solid rgba(255,255,255,0.2);
+                box-shadow: 0 25px 45px rgba(0,0,0,0.3);
+              }
+              .avatar {
+                width: 100px;
+                height: 100px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #e94560, #0f3460);
+                margin: 0 auto 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 40px;
+              }
+              h1 {
+                font-size: 2.5rem;
+                margin-bottom: 10px;
+                background: linear-gradient(135deg, #e94560, #a8edea);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+              }
+              p {
+                font-size: 1.1rem;
+                opacity: 0.8;
+                margin-bottom: 30px;
+              }
+              .badge {
+                display: inline-block;
+                background: rgba(233,69,96,0.3);
+                border: 1px solid #e94560;
+                padding: 6px 18px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                margin: 5px;
+              }
+              .footer {
+                margin-top: 40px;
+                font-size: 0.75rem;
+                opacity: 0.5;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <div class="avatar">👨‍💻</div>
+              <h1>Ing. Ibeth Ortega/h1>
+              <p>Ingeniera en Sistemas</p>
+              <div>
+                <span class="badge">☁️ AWS</span>
+                <span class="badge">⚙️ GitHub Actions</span>
+                <span class="badge">🏗️ CloudFormation</span>
+                <span class="badge">🐧 Linux</span>
+              </div>
+              <div class="footer">Desplegado automáticamente con GitHub Actions 🚀</div>
+            </div>
+          </body>
+          </html>
+          EOF
+      Tags:
+        - Key: Name
+          Value: EC2-WebSite-GitHubActions
+
+Outputs:
+
+  InstanceId:
+    Value: !Ref MyEC2
+
+  PublicIP:
+    Description: IP publica para ver el sitio
+    Value: !GetAtt MyEC2.PublicIp
+
+  WebsiteURL:
+    Description: URL del sitio web
+    Value: !Sub 'http://${MyEC2.PublicIp}'
